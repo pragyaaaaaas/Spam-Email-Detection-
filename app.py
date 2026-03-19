@@ -7,11 +7,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-from collections import Counter
-
 # ---------------- Sidebar ----------------
 st.sidebar.title("📊 Spam Detection Project")
-st.sidebar.info("Machine Learning + Statistics using Streamlit")
+st.sidebar.info("ML + Statistics using Streamlit")
 
 # ---------------- Title ----------------
 st.title("📧 Spam Email Detection App")
@@ -35,7 +33,7 @@ else:
     }
     df = pd.DataFrame(data)
 
-# ---------------- Dataset Preview ----------------
+# ---------------- Show Dataset ----------------
 st.subheader("📄 Dataset Preview")
 st.write(df.head())
 
@@ -85,8 +83,10 @@ if st.button("Predict"):
     else:
         st.warning("⚠️ Please enter some text.")
 
-# ---------------- Word Frequency ----------------
-st.subheader("📊 Top 10 Words in Dataset")
+# ---------------- Extra Visualization ----------------
+st.subheader("📊 Word Frequency (Top Words)")
+
+from collections import Counter
 
 all_words = " ".join(df['text']).lower().split()
 word_counts = Counter(all_words)
