@@ -11,61 +11,62 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 # ---------------- TEXT CLEANING ----------------
 def clean_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-z\s]', '', text)
+    text = re.sub(r'http\S+', '', text)   # remove URLs
+    text = re.sub(r'\d+', '', text)       # remove numbers
+    text = re.sub(r'[^a-z\s]', '', text)  # remove special chars
     return text
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.title("📊 Spam Detection Project")
-st.sidebar.info("Improved ML Model with Better Accuracy")
+st.sidebar.info("ML Model trained on real dataset")
 
 # ---------------- TITLE ----------------
 st.title("📧 Spam Email Detection App")
 
-# ---------------- DATASET ----------------
-data = {
-    'text': [
-        # Spam
-        "Win money now", "Free offer just for you",
-        "Claim your prize", "Earn cash fast",
-        "Limited time offer", "Congratulations you won",
-        "Click here to claim reward", "Get rich quick",
-        "Exclusive deal just for you", "You have won cash prize",
+# ---------------- LOAD DATA ----------------
+@st.cache_data
+def load_data():
+    df = pd.read_csv("spam.csv", encoding='latin-1')
 
-        # Non-Spam
-        "Hello friend", "Meeting tomorrow",
-        "Let's study together", "Project discussion",
-        "Call me later", "Assignment submission is due today",
-        "Please review the document", "Lunch at 2 PM",
-        "See you soon", "Good morning",
-        "Are you coming to class?", "Let's meet in library"
-    ],
-    'label': [1,1,1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0,0,0,0]
-}
+    # Keep only required columns
+    df = df[['v1', 'v2']]
+    df.columns = ['label', 'text']
 
-df = pd.DataFrame(data)
+    # Convert labels
+    df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+
+    return df
+
+df = load_data()
 
 # Clean text
 df['text'] = df['text'].apply(clean_text)
 
-# ---------------- PREVIEW ----------------
+# ---------------- DATA PREVIEW ----------------
 st.subheader("📄 Dataset Preview")
 st.write(df.head())
 
-# ---------------- MODEL ----------------
+# ---------------- MODEL TRAINING ----------------
 X = df['text']
 y = df['label']
 
-vectorizer = TfidfVectorizer(stop_words='english')
+vectorizer = TfidfVectorizer(
+    stop_words='english',
+    ngram_range=(1,2),
+    max_df=0.9,
+    min_df=2
+)
+
 X_vec = vectorizer.fit_transform(X)
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X_vec, y, test_size=0.3, random_state=42
+    X_vec, y, test_size=0.2, random_state=42
 )
 
-model = MultinomialNB()
+model = MultinomialNB(alpha=0.1)
 model.fit(X_train, y_train)
 
-# ---------------- EVALUATION ----------------
+# ---------------- MODEL EVALUATION ----------------
 y_pred = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
@@ -81,27 +82,23 @@ st.subheader("✉️ Test Your Own Email")
 
 user_input = st.text_area("Enter Email Text")
 
-# Adjustable threshold
-threshold = st.slider("Spam Detection Threshold", 0.0, 1.0, 0.7)
+# Threshold slider
+threshold = st.slider("Spam Detection Threshold", 0.0, 1.0, 0.5)
 
+# ---------------- PREDICTION ----------------
 if st.button("Predict"):
     if user_input.strip() != "":
         cleaned_input = clean_text(user_input)
         input_data = vectorizer.transform([cleaned_input])
 
-        prediction = model.predict(input_data)
-        prob = model.predict_proba(input_data)
+        prob = model.predict_proba(input_data)[0][1]
 
-        spam_prob = prob[0][1]
+        st.write("📈 Spam Probability:", round(prob, 2))
 
-        st.write("📈 Spam Probability:", round(spam_prob, 2))
-
-        # Decision using threshold
-        if spam_prob > threshold:
+        if prob >= threshold:
             st.error("🚨 This is SPAM!")
         else:
             st.success("✅ This is NOT SPAM")
-
     else:
         st.warning("⚠️ Please enter some text.")
 
@@ -119,4 +116,4 @@ st.bar_chart(pd.DataFrame(common_words.values(), index=common_words.keys()))
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Made with ❤️ using Streamlit")
+st.caption("Made By Pragya Srivastava with ❤️ using Streamlit")
