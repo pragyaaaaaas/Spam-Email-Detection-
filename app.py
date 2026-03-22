@@ -133,4 +133,4 @@ st.bar_chart(chart_df)
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.markdown("<center>✨ Made By Pragya Srivastava with Streamlit ✨</center>", unsafe_allow_html=True)
+st.markdown("<center>✨ Made By Group 15(Pragya Srivastava,Ankit Kumar Jha and Priyanshu Sharma) with Streamlit ✨</center>", unsafe_allow_html=True)
